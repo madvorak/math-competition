@@ -1,18 +1,5 @@
 import data.real.nnreal
 
---@[derive [has_add, has_sub, has_mul, has_div, inhabited]]
-def ℝₚ := {r : ℝ // r > 0}
-
-instance : has_coe ℝₚ ℝ := ⟨subtype.val⟩
-
-@[simp] lemma val_eq_coe (n : ℝₚ) : n.val = n := rfl
-
-instance : can_lift ℝ ℝₚ :=
-{ coe := coe,
-  cond := λ r, r > 0,
-  prf := λ x hx, ⟨⟨x, hx⟩, rfl⟩ }
--- probably `ℝₚ` useless
-
 
 theorem must_be_identity {f : nnreal → nnreal} (h : ∀ x y : nnreal,
       f (f x + (y + 1) / (f y)) = 1 / (f y) + x + 1) :
@@ -28,7 +15,7 @@ begin
     rw one_add_one_eq_two at equ,
     rw equ,
     change 1 / f 1 + (B - (1 / f 1 + 1)) + 1 = B,
-    have xpos : B - (1 / f 1 + 1) > 0, sorry,
+    --have xpos : B - (1 / f 1 + 1) > 0, sorry,
     convert_to 1 / f 1 + B - (1 / f 1 + 1) + 1 = B, sorry,
     convert_to 1 / f 1 + B - (1 / f 1) - 1 + 1 = B, sorry,
     convert_to 1 / f 1 + B - (1 / f 1) + 1 - 1 = B, sorry,
@@ -67,6 +54,10 @@ begin
 
   have degree_one : ∃ a b : nnreal, ∀ x : nnreal, f x = a * x + b,
   {
+    use f 2 - f 1,
+    use f 1 + f 1 - f 2,
+    intro x,
+    rw lin_on_real x,
     sorry,
   },
   rcases degree_one with ⟨a, b, hf⟩,
