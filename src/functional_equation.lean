@@ -1,12 +1,12 @@
-import data.real.nnreal
+import data.real.basic
 
 
-theorem must_be_identity {f : nnreal → nnreal} (h : ∀ x y : nnreal,
+theorem must_be_identity {f : ℝ → ℝ} (h : ∀ x y : ℝ,
       f (f x + (y + 1) / (f y)) = 1 / (f y) + x + 1) :
-  ∀ x : nnreal,  x > 0  →  f x = x  :=
+  ∀ x : ℝ,  x > 0  →  f x = x  :=
 begin
-  let A : nnreal := 1 / f 1 + 1,
-  have high_range : ∀ B : nnreal, B > A → (∃ z : nnreal, f z = B),
+  let A : ℝ := 1 / f 1 + 1,
+  have high_range : ∀ B : ℝ, B > A → (∃ z : ℝ, f z = B),
   {
     intros B B_gt_A,
     let x := B - A,
@@ -26,7 +26,7 @@ begin
   have inj_f : function.injective f,
   {
     intros a b fa_eq_fb,
-    have foo : ∀ c : nnreal, 1 / (f c) + a + 1 = 1 / (f c) + b + 1,
+    have foo : ∀ c : ℝ, 1 / (f c) + a + 1 = 1 / (f c) + b + 1,
     {
       intro c,
       rw ← h a c,
@@ -36,46 +36,68 @@ begin
     finish,
   },
 
-  have lin_on_rat : ∀ p q : ℕ, let x : nnreal := ↑p / ↑q in
+  have lin_on_rat : ∀ p q : ℕ, let x : ℝ := ↑p / ↑q in
       f x = f 1 + (x - 1) * (f 2 - f 1),
   {
     intros p q,
     sorry,
   },
-  have increasing_f :  ∀ x y : nnreal,  x < y  →  f x < f y,
+  have increasing_f :  ∀ x y : ℝ,  0 < x  →  x < y  →  f x < f y,
   {
     sorry,
   },
-  have lin_on_real : ∀ x : nnreal, f x = f 1 + (x - 1) * (f 2 - f 1),
+  have lin_on_real : ∀ x : ℝ, f x = f 1 + (x - 1) * (f 2 - f 1),
   {
     intro x,
     sorry,
   },
 
-  have degree_one : ∃ a b : nnreal, ∀ x : nnreal, f x = a * x + b,
+  have degree_one : ∃ a b : ℝ, ∀ x : ℝ, f x = a * x + b,
   {
     use f 2 - f 1,
     use f 1 + f 1 - f 2,
     intro x,
     rw lin_on_real x,
-    sorry,
+    ring,
   },
   rcases degree_one with ⟨a, b, hf⟩,
-  intros x xpos,
-
   have a_eq_1 : a = 1,
   {
-    specialize h x 42,
-    rw hf x at h,
-    rw hf 42 at h,
-    rw hf (a * x + b + (42 + 1) / (a * 42 + b)) at h,
-    ring_nf at h,
-    sorry,
+    specialize h 1 1,
+    repeat { rw hf at h },
+    rw mul_one at h,
+    rw mul_add at h,
+    rw mul_add at h,
+    have multiplied := congr_arg (λ v, (a + b) * v) h,
+    dsimp at multiplied,
+    rw mul_add (a + b) _ 1 at multiplied,
+    rw mul_add (a + b) _ 1 at multiplied,
+    rw mul_div (a + b) 1 (a + b) at multiplied,
+    rw mul_comm (a + b) 1 at multiplied,
+    repeat { rw one_mul at multiplied },
+    rw div_self at multiplied,
+    repeat { rw mul_add (a + b) at multiplied },
+    rw ← mul_assoc (a + b) a ((1 + 1) / (a + b)) at multiplied,
+    rw mul_div at multiplied,
+    rw mul_comm (a + b) a at multiplied,
+    rw mul_assoc at multiplied,
+    rw mul_comm (a + b) (1 + 1) at multiplied,
+    rw ← mul_div at multiplied,
+    rw ← mul_div at multiplied,
+    rw div_self at multiplied,
+    rw mul_one at multiplied,
+    have subtracted := congr_arg (λ v, v - 2 * a) multiplied,
+    dsimp at subtracted,
+    ring_nf at subtracted,
+    sorry, sorry, sorry,
   },
   have b_eq_0 : b = 0,
   {
+    rw a_eq_1 at hf,
     sorry,
   },
+
+  intros x xpos,
   rw hf x,
   rw a_eq_1,
   rw b_eq_0,
