@@ -1,6 +1,5 @@
 import data.real.basic
 
-
 theorem must_be_identity {f : ℝ → ℝ} (h : ∀ x y : ℝ,
       f (f x + (y + 1) / (f y)) = 1 / (f y) + x + 1) :
   ∀ x : ℝ,  x > 0  →  f x = x  :=
@@ -15,13 +14,7 @@ begin
     rw one_add_one_eq_two at equ,
     rw equ,
     change 1 / f 1 + (B - (1 / f 1 + 1)) + 1 = B,
-    --have xpos : B - (1 / f 1 + 1) > 0, sorry,
-    convert_to 1 / f 1 + B - (1 / f 1 + 1) + 1 = B, sorry,
-    convert_to 1 / f 1 + B - (1 / f 1) - 1 + 1 = B, sorry,
-    convert_to 1 / f 1 + B - (1 / f 1) + 1 - 1 = B, sorry,
-    convert_to 1 / f 1 + B - (1 / f 1) + 0 = B, sorry,
-    convert_to 1 / f 1 + B - (1 / f 1) = B, rw add_zero,
-    finish,
+    ring,
   },
   have inj_f : function.injective f,
   {
@@ -35,7 +28,77 @@ begin
     },
     finish,
   },
-
+  have f_increment :
+    ∀ δ : ℝ, (0 < δ ∧ δ < 1 / A) → ∃ ε : ℝ,
+      ∀ x : ℝ, x > 0 → f (x + δ) = f x + ε,
+  {
+    intros δ restrictions,
+    let B := (A + 1 / δ) / 2,
+    let C := (A + 1 / δ) * (1 / δ) / ((1 / δ) - A),
+    have delta_eq : δ = 1 / B - 1 / C,
+    {
+      change δ = 1 / ((A + 1 / δ) / 2) - 1 / ((A + 1 / δ) * (1 / δ) / ((1 / δ) - A)),
+      rw one_div_div,
+      rw one_div_div,
+      symmetry,
+      have positiv : A + 1 / δ > 0,
+      {
+        sorry,
+      },
+      calc 2 / (A + 1 / δ) - (1 / δ - A) / ((A + 1 / δ) * (1 / δ))
+          = (2 * (1 / δ) - (1 / δ - A)) / ((A + 1 / δ) * (1 / δ)) : sorry
+      ... = ((1 / δ) + A) / ((A + 1 / δ) * (1 / δ))               : by ring
+      ... = (A + 1 / δ) / ((A + 1 / δ) * (1 / δ))                 : by rw add_comm
+      ... = ((A + 1 / δ) / (A + 1 / δ)) / (1 / δ)                 : by rw div_div
+      ... = 1 / (1 / δ)                                           : by rw div_self (ne_of_gt positiv)
+      ... = δ                                                     : one_div_one_div δ,
+    },
+    obtain ⟨y₁, preimage_B⟩ : ∃ y₁ : ℝ, f y₁ = B,
+    {
+      exact high_range B sorry,
+    },
+    obtain ⟨y₂, preimage_C⟩ : ∃ y₂ : ℝ, f y₂ = C,
+    {
+      exact high_range C sorry,
+    },
+    have equ : ∀ x : ℝ, x > 0 → 1 / f y₁ + x + 1 = 1 / f y₂ + (x+δ) + 1, sorry,
+    have henc : ∀ x : ℝ, x > 0 → f (f x + (y₁ + 1) / (f y₁)) = f (f (x+δ) + (y₂ + 1) / (f y₂)),
+    {
+      intros x x_pos,
+      rw h x y₁,
+      rw h (x+δ) y₂,
+      rw delta_eq,
+      rw preimage_B,
+      rw preimage_C,
+      ring,
+    },
+    have byinj : ∀ x : ℝ, x > 0 → f x + (y₁ + 1) / (f y₁) = f (x+δ) + (y₂ + 1) / (f y₂),
+    {
+      intros x x_pos,
+      exact inj_f (henc x x_pos),
+    },
+    use (y₁ + 1) / (f y₁) - (y₂ + 1) / (f y₂),
+    intros x x_pos,
+    sorry,
+  },
+  have f_multiple_increment :
+    ∀ δ : ℝ, (0 < δ ∧ δ < 1 / A) → ∃ ε : ℝ,
+      ∀ x : ℝ, x > 0 → ∀ n : ℕ, f (x + n * δ) = f x + n * ε,
+  {
+    intros δ restrictions,
+    obtain ⟨ε, step⟩ := f_increment δ restrictions,
+    use ε,
+    intros x x_pos n,
+    induction n with n ih,
+    {
+      simp,
+    },
+    convert_to f (x + ↑n * δ + δ) = f x + ↑n * ε + ε, sorry, sorry,
+    rw ← ih,
+    rw step,
+    calc x + ↑n * δ ≥ x : by finish
+    ... > 0 : x_pos,
+  },
   have lin_on_rat : ∀ p q : ℕ, let x : ℝ := ↑p / ↑q in
       f x = f 1 + (x - 1) * (f 2 - f 1),
   {
