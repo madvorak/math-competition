@@ -1,10 +1,30 @@
 import data.real.basic
 
-lemma well_known {f : ℝ → ℝ} :
-  ∀ x y : ℝ, (∀ ε : ℝ, ε > 0 → |y - f x| < ε) → f x = y :=
+lemma eq_of_arbitrarily_close :
+  ∀ x y : ℝ, (∀ ε : ℝ, ε > 0 → |y - x| < ε) → x = y :=
 begin
-  intros x y ass,
-  sorry,
+  intros x y arbitrarily_close,
+  by_contradiction,
+  have false_of_abs_lt : ∀ a : ℝ, |a| < a → false,
+  {
+    intros a abs_lt,
+    have lt_self : a < a, exact lt_of_abs_lt abs_lt,
+    have ne_self : a ≠ a, exact ne_of_lt lt_self,
+    exact false_of_ne ne_self,
+  },
+  cases lt_or_gt_of_ne h with case_lt case_gt,
+  {
+    rw ← sub_pos at case_lt,
+    specialize arbitrarily_close (y - x) case_lt,
+    exact false_of_abs_lt (y - x) arbitrarily_close,
+  },
+  {
+    change y < x at case_gt,
+    rw ← sub_pos at case_gt,
+    specialize arbitrarily_close (x - y) case_gt,
+    rw abs_sub_comm y x at arbitrarily_close,
+    exact false_of_abs_lt (x - y) arbitrarily_close,
+  },
 end
 
 lemma min__div {a b c : ℝ} (c_pos : c > 0) :
@@ -29,6 +49,21 @@ begin
   {
     refl,
   },
+end
+
+lemma mul__div_div {a b c : ℝ} (c_pos : c > 0) : a * (c / b / c) = a / b :=
+begin
+  have hc : c ≠ 0, exact ne_of_gt c_pos,
+  have almost : c / b / c = 1 / b,
+  {
+    ring_nf,
+    rw mul_comm,
+    rw ← mul_assoc,
+    rw mul_inv_cancel hc,
+    rw one_mul,
+  },
+  rw almost,
+  exact mul_one_div a b,
 end
 
 lemma lin_on_real {f : ℝ → ℝ}
@@ -80,22 +115,47 @@ begin
       exact above,
     },
   },
-  apply well_known,
+  apply eq_of_arbitrarily_close,
   intros ε ε_pos,
-  cases ex₁ (min ε (x/2)) sorry with x₁ hx₁, -- or should we multiply by `(f 2 - f 1)` ??
-  cases ex₂ ε ε_pos with x₂ hx₂,
+  cases ex₁ ((min ε (x * (f 2 - f 1) / 2))) (by {
+    change 0 < min ε (x * (f 2 - f 1) / 2),
+    rw lt_min_iff,
+    split,
+    {
+      exact ε_pos,
+    },
+    {
+      apply half_pos,
+      exact mul_pos x_pos lt_f2_f1,
+    },
+  }) with x₁ hx₁,
   cases hx₁ with x₁_lt_x dist₁,
-  cases hx₂ with x_lt_x₂ dist₂,
   rw min__div lt_f2_f1 at dist₁,
   have x₁_pos : 0 < (x₁ : ℝ),
   {
     rw lt_min_iff at dist₁,
-    sorry,
+    cases dist₁ with foo bar,
+    have baz : x - ↑x₁ < x / 2,
+    {
+      rw mul_div_assoc at bar,
+      rw mul_div_assoc at bar,
+      convert bar,
+      rw mul__div_div lt_f2_f1,
+    },
+    have qux : x / 2 < ↑x₁,
+    {
+      clear_except baz,
+      linarith,
+    },
+    apply lt_trans' qux,
+    exact half_pos x_pos,
   },
   have fx₁ := lin_on_rat x₁ (by {
     clear_except x₁_pos,
     assumption_mod_cast,
   }),
+  cases ex₂ ε ε_pos with x₂ hx₂,
+  cases hx₂ with x_lt_x₂ dist₂,
   have fx₂ := lin_on_rat x₂ (by {
     have x₂_pos := lt_trans x_pos x_lt_x₂,
     clear_except x₂_pos,
